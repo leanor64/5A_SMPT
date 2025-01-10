@@ -122,5 +122,43 @@ class KInduction(AbstractChecker):
         int
             Iteration number of the unsat query.
         """
-        raise NotImplementedError
+        
+        info("[K-induction] > Initialization")
+
+        info("[K-induction] > Declaration of the places from the Petri net (iteration: 0)")
+        self.solver.write(self.ptnet.smtlib_declare_places(0))
+
+        info("[K-induction] > Push")
+        self.solver.push()
+
+        info("[K-induction] > Formula to check the satisfiability (iteration: 0)")
+        self.solver.write(self.formula.smtlib(0, assertion=True))
+
+        k = 0
+
+        while not self.solver.check_sat():
+            info("[K-induction] > Pop")
+            self.solver.pop()
+
+            k += 1
+            info("[K-induction] > k = {}".format(k))
+
+            info("[K-induction] > Declaration of the places (iteration: {})".format(k))
+            self.solver.write(self.ptnet.smtlib_declare_places(k))
+
+            info("[K-induction] > Transition relation: {} -> {}".format(k - 1, k))
+            self.solver.write(self.ptnet.smtlib_transition_relation(k - 1, k))
+
+            info("[K-induction] > Push")
+            self.solver.push()
+
+            info("[K-induction] > Formula to check the satisfiability (iteration: {})".format(k))
+            self.solver.write(self.formula.smtlib(k, assertion=True))
+            self.solver.write(self.formula.smtlib(k - 1, assertion=True, negation=True))
+
+        return k - 1
+
+
+
+
     ######################
