@@ -100,5 +100,37 @@ class Induction(AbstractChecker):
         bool, optional
             `True` if the formula is inductive, `None` otherwise.
         """
-        raise NotImplementedError
+
+        info("[Induction] > Initialization")
+
+        info("[Induction] > Declaration of the places from the Petri net")
+        self.solver.write(self.ptnet.smtlib_declare_places(0))
+
+        info("[Induction] > Initial marking of the Petri net")
+        self.solver.write(self.ptnet.smtlib_set_initial_marking(0))
+
+        info("[Induction] > Formula to check the satisfiability")
+        self.solver.write(self.formula.smtlib(0, assertion=True))
+
+        check1 = self.solver.check_sat()
+
+        if check1 :
+            return True
+        else :
+            self.solver.reset()
+
+            info("[Induction] > Declaration of the places from the Petri net")
+            self.solver.write(self.ptnet.smtlib_declare_places(0))
+            self.solver.write(self.ptnet.smtlib_declare_places(1))
+
+            info("[Induction] > Formula to check the satisfiability")
+            self.solver.write(self.formula.smtlib(0, assertion=True, negation=True))
+            self.solver.write(self.ptnet.smtlib_transition_relation(0, 1))
+            self.solver.write(self.formula.smtlib(1, assertion=True))
+
+            check2 = self.solver.check_sat()
+            if not(check2) :
+                return False
+            else :
+                return None
     ######################
