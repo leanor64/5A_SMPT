@@ -154,6 +154,23 @@ class PetriNet:
             smt_input += "(assert (>= {} 0))\n".format(var)
 
         return smt_input
+    
+    def smtlib_declare_transitions(self) -> str:
+        """ Declare variables corresponding to the transitions.
+        -------
+        str
+            SMT-LIB format.
+        """
+
+        smt_input = ""
+        
+        for tr in self.transitions:
+            var = "{}".format(tr)
+            smt_input += "(declare-const {} Int)\n".format(var)
+            smt_input += "(assert (>= {} 0))\n".format(var)
+
+        return smt_input
+
 
     ######################
     # Sect. 2.3.1. #
@@ -206,11 +223,29 @@ class PetriNet:
                 delta += "\n\t (and (= {} {}))".format(var_prime, f_delta)
                 enable += "\n\t (and (>= {} {}))".format(var, self.pre[t].get(pl, 0))
             T += " (and {} {})\n".format(delta, enable)
-        # print(T)
-        # exit()
         T += "))"
         return T
     ######################
+
+    def smtlib_equation(self, k: int) -> str:
+        """ Set the state equations
+       
+        Returns
+        -------
+        str
+            SMT-LIB format.
+        """
+        
+        res = ""
+        for t in self.transitions :
+            zt = "{}".format(t)
+            for pl in self.places : 
+                m = "{}@{}".format(pl,k)
+                m_0 = "{}@0".format(pl)
+                i = "(- {} {})".format(self.post[t].get(pl, 0), self.pre[t].get(pl, 0))
+                res += "(assert (= {} (+ {} (* {} {}))))\n".format(m, m_0, i, zt)
+
+        return res
 
     def parse_net(self, filename: str) -> None:
         """ Petri net parser.

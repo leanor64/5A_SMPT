@@ -118,5 +118,35 @@ class StateEquation(AbstractChecker):
         bool, optional
             `False` if F is proved as not reachable, `None` otherwise.
         """
-        raise NotImplementedError
+
+        info("[State-E] > Initialization")
+
+        info("[State-E] > Declaration of the places from the Petri net (iteration: 0)")
+        self.solver.write(self.ptnet.smtlib_declare_places(0))
+        self.solver.write(self.ptnet.smtlib_declare_transitions())
+
+        info("[State-E] > Push")
+        self.solver.push()
+
+        info("[State-E] > Formula to check the satisfiability (iteration: 0)")
+        self.solver.write(self.formula.smtlib(0, assertion=True))
+
+        k = 0
+
+        while not self.solver.check_sat():
+            info("[State-E] > Pop")
+            self.solver.pop()
+
+            k += 1
+            info("[State-E] > k = {}".format(k))
+
+            self.solver.write(self.ptnet.smtlib_declare_places(k))
+
+            #TODO
+
+
+        if test :
+            return False
+        else :
+            return None
     ######################

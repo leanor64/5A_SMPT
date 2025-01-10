@@ -158,7 +158,4 @@ class KInduction(AbstractChecker):
 
         return k - 1
 
-
-
-
     ######################
